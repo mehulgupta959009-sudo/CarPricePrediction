@@ -71,66 +71,64 @@ def app(request, context=None):
         'Content-Type': 'application/json',
     }
 
-    method = None
-    body = '{}'
-
-    if isinstance(request, dict):
-        method = request.get('method') or request.get('httpMethod')
-        body = request.get('body', '{}')
-
-        if isinstance(body, str) and body.startswith('{') and body.endswith('}'):
-            pass
-        else:
-            body = '{}'
-
-        if 'body' not in request and 'data' in request:
-            body = request.get('data', '{}')
-
-    elif hasattr(request, 'method'):
-        method = request.method
-        body = getattr(request, 'body', '{}')
-
-    if method == 'OPTIONS':
-        return {'statusCode': 204, 'headers': headers, 'body': ''}
-
-    if method != 'POST':
-        return {'statusCode': 405, 'headers': headers, 'body': json.dumps({'error': 'Method not allowed'})}
-
-    if isinstance(body, bytes):
-        body = body.decode('utf-8')
-
     try:
-        payload = json.loads(body) if isinstance(body, str) else body
-    except json.JSONDecodeError:
-        return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Invalid JSON'})}
+        method = None
+        body = '{}'
 
-    company = normalize_text(payload.get('company'))
-    model = normalize_text(payload.get('model'))
-    year = int(payload.get('yearOfPurchase', 0) or 0)
-    kilometers = int(payload.get('kilometersDriven', 0) or 0)
-    fuel = normalize_text(payload.get('fuelType'))
+        if isinstance(request, dict):
+            method = request.get('method') or request.get('httpMethod')
+            body = request.get('body', '{}')
 
-    try:
-        estimate = _predict_price(company, model, year, kilometers, fuel)
-    except ValueError as exc:
-        return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': str(exc)})}
+            if 'body' not in request and 'data' in request:
+                body = request.get('data', '{}')
 
-    return {
-        'statusCode': 200,
-        'headers': headers,
-        'body': json.dumps({
-            'message': 'Prediction received',
-            'estimatedPrice': estimate,
-            'currency': 'INR',
-            'details': {
-                'company': payload.get('company'),
-                'model': payload.get('model'),
-                'yearOfPurchase': year,
-                'kilometersDriven': kilometers,
-                'fuelType': payload.get('fuelType'),
-            },
-        }),
-    }
+        elif hasattr(request, 'method'):
+            method = request.method
+            body = getattr(request, 'body', '{}')
+
+        if method == 'OPTIONS':
+            return {'statusCode': 204, 'headers': headers, 'body': ''}
+
+        if method != 'POST':
+            return {'statusCode': 405, 'headers': headers, 'body': json.dumps({'error': 'Method not allowed'})}
+
+        if isinstance(body, bytes):
+            body = body.decode('utf-8')
+
+        try:
+            payload = json.loads(body) if isinstance(body, str) else body
+        except json.JSONDecodeError:
+            return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Invalid JSON'})}
+
+        company = normalize_text(payload.get('company'))
+        model = normalize_text(payload.get('model'))
+        year = int(payload.get('yearOfPurchase', 0) or 0)
+        kilometers = int(payload.get('kilometersDriven', 0) or 0)
+        fuel = normalize_text(payload.get('fuelType'))
+
+        try:
+            estimate = _predict_price(company, model, year, kilometers, fuel)
+        except ValueError as exc:
+            return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': str(exc)})}
+
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({
+                'message': 'Prediction received',
+                'estimatedPrice': estimate,
+                'currency': 'INR',
+                'details': {
+                    'company': payload.get('company'),
+                    'model': payload.get('model'),
+                    'yearOfPurchase': year,
+                    'kilometersDriven': kilometers,
+                    'fuelType': payload.get('fuelType'),
+                },
+            }),
+        }
+    except Exception as exc:
+        return {'statusCode': 500, 'headers': headers, 'body': json.dumps({'error': f'Internal server error: {str(exc)}'})}
 
 
 # Vercel Python runtime expects an exported app or handler function.
