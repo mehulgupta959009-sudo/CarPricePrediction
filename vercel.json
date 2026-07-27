@@ -9,14 +9,14 @@
       }
     },
     {
-      "src": "api/predict.py",
-      "use": "@vercel/python"
+      "src": "api/predict.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/predict",
-      "dest": "/api/predict.py"
+      "dest": "/api/predict.js"
     },
     {
       "src": "/(.*)",
