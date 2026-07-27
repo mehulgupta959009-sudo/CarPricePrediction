@@ -63,7 +63,7 @@ def _predict_price(company, model, year, kilometers, fuel):
     return round(prediction, 2)
 
 
-def handler(request, context=None):
+def app(request, context=None):
     headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -113,3 +113,8 @@ def handler(request, context=None):
             },
         }),
     }
+
+
+# Vercel Python runtime expects an exported app or handler function.
+def handler(request, context=None):
+    return app(request, context)
