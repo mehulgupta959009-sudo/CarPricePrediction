@@ -75,8 +75,17 @@ def app(request, context=None):
     body = '{}'
 
     if isinstance(request, dict):
-        method = request.get('method')
+        method = request.get('method') or request.get('httpMethod')
         body = request.get('body', '{}')
+
+        if isinstance(body, str) and body.startswith('{') and body.endswith('}'):
+            pass
+        else:
+            body = '{}'
+
+        if 'body' not in request and 'data' in request:
+            body = request.get('data', '{}')
+
     elif hasattr(request, 'method'):
         method = request.method
         body = getattr(request, 'body', '{}')
