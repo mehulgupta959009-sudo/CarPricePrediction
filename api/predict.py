@@ -71,18 +71,27 @@ def app(request, context=None):
         'Content-Type': 'application/json',
     }
 
-    if request.get('method') == 'OPTIONS':
+    method = None
+    body = '{}'
+
+    if isinstance(request, dict):
+        method = request.get('method')
+        body = request.get('body', '{}')
+    elif hasattr(request, 'method'):
+        method = request.method
+        body = getattr(request, 'body', '{}')
+
+    if method == 'OPTIONS':
         return {'statusCode': 204, 'headers': headers, 'body': ''}
 
-    if request.get('method') != 'POST':
+    if method != 'POST':
         return {'statusCode': 405, 'headers': headers, 'body': json.dumps({'error': 'Method not allowed'})}
 
-    body = request.get('body', '{}')
     if isinstance(body, bytes):
         body = body.decode('utf-8')
 
     try:
-        payload = json.loads(body)
+        payload = json.loads(body) if isinstance(body, str) else body
     except json.JSONDecodeError:
         return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Invalid JSON'})}
 

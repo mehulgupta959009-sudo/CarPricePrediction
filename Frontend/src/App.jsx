@@ -43,12 +43,14 @@ function App() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        console.error('Prediction request failed', data);
         throw new Error(data.error || 'Unable to submit data right now.');
       }
 
       setStatus('success');
       setMessage(`Estimated price: ₹${data.estimatedPrice?.toLocaleString('en-IN') || 'n/a'}`);
     } catch (error) {
+      console.error('Prediction request error', error);
       setStatus('error');
       setMessage(error.message || 'Submission failed.');
     }
