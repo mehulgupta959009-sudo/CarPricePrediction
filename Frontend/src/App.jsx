@@ -40,11 +40,16 @@ function App() {
         }),
       });
 
-      const data = await response.json().catch(() => ({}));
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
 
       if (!response.ok) {
         console.error('Prediction request failed', data);
-        throw new Error(data.error || 'Unable to submit data right now.');
+        throw new Error(data.error || data.message || 'Unable to submit data right now.');
       }
 
       setStatus('success');
